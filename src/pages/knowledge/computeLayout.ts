@@ -78,6 +78,7 @@ export function computeLayout(nodes: KnowledgeNode[], width: number, height: num
     // 引力（连接的节点之间）
     nodes.forEach((node) => {
       node.connections.forEach((connId) => {
+        if (node.id >= connId) return; // Avoid double-counting
         if (!idToNode.has(connId)) return;
         const a = positions.get(node.id)!;
         const b = positions.get(connId)!;
@@ -89,8 +90,11 @@ export function computeLayout(nodes: KnowledgeNode[], width: number, height: num
         const fy = (dy / dist) * force;
 
         const va = velocities.get(node.id)!;
+        const vb = velocities.get(connId)!;
         va.vx += fx * temperature;
         va.vy += fy * temperature;
+        vb.vx -= fx * temperature;
+        vb.vy -= fy * temperature;
       });
     });
 

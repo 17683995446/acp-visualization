@@ -15,7 +15,10 @@ export class TaskService {
   static getAssignableTasks(tasks: Task[]): Task[] {
     return tasks.filter(t =>
       t.status === 'pending' &&
-      t.dependencies.every(depId => tasks.find(dt => dt.id === depId)?.status === 'completed')
+      t.dependencies.every(depId => {
+        const dep = tasks.find(dt => dt.id === depId);
+        return !dep || dep.status === 'completed';
+      })
     );
   }
 

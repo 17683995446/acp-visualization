@@ -2,8 +2,13 @@ import type { Score, Evaluation } from '../types';
 
 export class EvaluationService {
   static calculateTotalScore(scores: Score[]): number {
+    const totalWeight = scores.reduce((sum, s) => sum + s.weight, 0);
+    if (totalWeight <= 0) return 0;
     return Math.round(
-      scores.reduce((sum, s) => sum + (s.value / s.max) * s.weight * 100, 0)
+      scores.reduce((sum, s) => {
+        if (s.max <= 0) return sum;
+        return sum + (s.value / s.max) * (s.weight / totalWeight) * 100;
+      }, 0)
     );
   }
 

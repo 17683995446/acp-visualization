@@ -126,9 +126,10 @@ export function scheduleAll(
   const priorityOrder: Record<string, number> = { [TASK_PRIORITY.P0]: 0, [TASK_PRIORITY.P1]: 1, [TASK_PRIORITY.P2]: 2, [TASK_PRIORITY.P3]: 3 };
   const pendingTasks = tasks
     .filter(t => t.status === TASK_STATUS.PENDING)
-    .filter(t => t.dependencies.every(depId =>
-      tasks.find(dt => dt.id === depId)?.status === TASK_STATUS.COMPLETED
-    ))
+    .filter(t => t.dependencies.every(depId => {
+      const dep = tasks.find(dt => dt.id === depId);
+      return !dep || dep.status === TASK_STATUS.COMPLETED;
+    }))
     .sort((a, b) => (priorityOrder[a.priority] ?? 4) - (priorityOrder[b.priority] ?? 4));
 
   for (const task of pendingTasks) {

@@ -141,7 +141,7 @@ export const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({
         const baseY = margin.top + rowHeight * (rowIndex + 1);
 
         // 添加确定性抖动避免重叠
-        const jitter = (hashCode(task.id) % 40) - 20;
+        const jitter = (Math.abs(hashCode(task.id)) % 40) - 20;
 
         nodeMap.set(task.id, {
           id: task.id,
@@ -300,18 +300,21 @@ export const TaskDependencyGraph: React.FC<TaskDependencyGraphProps> = ({
             selectedTaskId === edge.to.id;
 
           // 计算箭头起点和终点（考虑节点半径）
+          const fromRadius = prioritySizes[edge.from.priority];
           const nodeRadius = prioritySizes[edge.to.priority];
           const dx = edge.to.x - edge.from.x;
           const dy = edge.to.y - edge.from.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           const offsetX = (dx / distance) * (nodeRadius + 5);
           const offsetY = (dy / distance) * (nodeRadius + 5);
+          const fromOffsetX = (dx / distance) * (fromRadius + 5);
+          const fromOffsetY = (dy / distance) * (fromRadius + 5);
 
           return (
             <line
               key={`edge-${index}`}
-              x1={edge.from.x}
-              y1={edge.from.y}
+              x1={edge.from.x + fromOffsetX}
+              y1={edge.from.y + fromOffsetY}
               x2={edge.to.x - offsetX}
               y2={edge.to.y - offsetY}
               stroke={isHighlighted ? '#3B82F6' : '#9CA3AF'}

@@ -43,6 +43,12 @@ const VALID_ROLES: Role[] = [
   'maintainer', 'collaborator', 'contributor',
 ];
 
+const ROLE_LEVELS: Record<string, number> = {
+  ceo: 10, cto: 9, coo: 9, cqo: 9,
+  manager: 7, senior: 6, mid: 5, junior: 3, intern: 1,
+  maintainer: 7, collaborator: 5, contributor: 4,
+};
+
 const VALID_PRIORITIES: TaskPriority[] = ['P0', 'P1', 'P2', 'P3'];
 
 function validate(condition: boolean, message: string): boolean {
@@ -155,7 +161,7 @@ export const useACPStore = create<ACPState>(persistMiddleware((set, get) => ({
       id: generateId('agent'),
       name: input.name,
       role: input.role,
-      level: input.role === 'intern' ? 1 : input.role === 'junior' ? 3 : input.role === 'mid' ? 5 : input.role === 'senior' ? 6 : input.role === 'manager' ? 7 : 8,
+      level: ROLE_LEVELS[input.role] ?? 5,
       reputation: 50,
       capabilities: input.capabilities,
       status: 'idle',
@@ -357,23 +363,28 @@ export const useACPStore = create<ACPState>(persistMiddleware((set, get) => ({
   },
 
   assignTask: (taskId, memberId) => {
-    // Validate member exists and is idle
-    const currentState = get();
-    const member = currentState.organization.members.find(m => m.id === memberId);
-    if (!member) { get().addLog('warn', `assignTask: 成员 "${memberId}" 不存在`); return; }
-    if (member.status !== 'idle') { get().addLog('warn', `assignTask: 成员 "${member.name}" 不是空闲状态`); return; }
-    const task = currentState.tasks.find(t => t.id === taskId);
-    if (!task) { get().addLog('warn', `assignTask: 任务 "${taskId}" 不存在`); return; }
-
-    // If task already assigned, release old assignee first
-    let updatedMembers = currentState.organization.members;
-    if (task.assignee && task.assignee !== memberId) {
-      updatedMembers = updatedMembers.map(m =>
-        m.id === task.assignee ? { ...m, status: 'idle' as const, currentTask: undefined } : m
-      );
-    }
+    let assigned = false;
+    let taskTitle = taskId;
+    let memberName = memberId;
 
     set((state) => {
+      const member = state.organization.members.find(m => m.id === memberId);
+      if (!member || member.status !== 'idle') return state;
+
+      const task = state.tasks.find(t => t.id === taskId);
+      if (!task) return state;
+
+      assigned = true;
+      taskTitle = task.title;
+      memberName = member.name;
+
+      let updatedMembers = state.organization.members;
+      if (task.assignee && task.assignee !== memberId) {
+        updatedMembers = updatedMembers.map(m =>
+          m.id === task.assignee ? { ...m, status: 'idle' as const, currentTask: undefined } : m
+        );
+      }
+
       const updatedTasks = state.tasks.map(t =>
         t.id === taskId ? { ...t, assignee: memberId, status: 'in_progress' as TaskStatus } : t
       );
@@ -386,10 +397,10 @@ export const useACPStore = create<ACPState>(persistMiddleware((set, get) => ({
       };
     });
 
-    eventBus.emit('task:assigned', { taskId, memberId });
-    const memberAfter = get().organization.members.find(m => m.id === memberId);
-    const taskAfter = get().tasks.find(t => t.id === taskId);
-    get().addLog('info', `任务分配: ${taskAfter?.title} → ${memberAfter?.name}`);
+    if (assigned) {
+      eventBus.emit('task:assigned', { taskId, memberId });
+      get().addLog('info', `任务分配: ${taskTitle} → ${memberName}`);
+    }
   },
 
   unassignTask: (taskId) => {
@@ -481,17 +492,35 @@ export const useACPStore = create<ACPState>(persistMiddleware((set, get) => ({
       const updatedScores = state.evaluationScores.map(s =>
         s.dimension === dimension ? { ...s, value } : s
       );
-      return { evaluationScores: updatedScores };
+
+      const totalScore = Math.round(
+        updatedScores.reduce((sum, s) => {
+          if (s.max <= 0) return sum;
+          return sum + (s.value / s.max) * s.weight * 100;
+        }, 0)
+      );
+
+      let rating: Evaluation['rating'];
+      if (totalScore >= 95) rating = 'exceptional';
+      else if (totalScore >= 85) rating = 'excellent';
+      else if (totalScore >= 70) rating = 'good';
+      else if (totalScore >= 60) rating = 'acceptable';
+      else rating = 'needs_improvement';
+
+      return {
+        evaluationScores: updatedScores,
+        evaluation: { ...state.evaluation, totalScore, rating, scores: updatedScores },
+      };
     });
-    get().recalculateEvaluation();
   },
 
   recalculateEvaluation: () => {
     const { evaluationScores } = get();
-    const totalScore = Math.round(
+    const totalWeight = evaluationScores.reduce((sum, s) => sum + s.weight, 0);
+    const totalScore = totalWeight <= 0 ? 0 : Math.round(
       evaluationScores.reduce((sum, s) => {
         if (s.max <= 0) return sum;
-        return sum + (s.value / s.max) * s.weight * 100;
+        return sum + (s.value / s.max) * (s.weight / totalWeight) * 100;
       }, 0)
     );
 
@@ -609,11 +638,13 @@ export const useACPStore = create<ACPState>(persistMiddleware((set, get) => ({
     // 3. 随机声誉波动
     if (Math.random() > 0.7) {
       const members = state.organization.members.filter(m => m.status !== 'offline');
-      if (members.length === 0) return;
-      const randomMember = members[Math.floor(Math.random() * members.length)];
-      const delta = Math.random() > 0.5 ? 1 : -1;
-      reputationChanges.push({ memberId: randomMember.id, delta });
-      result.reputationChanges++;
+      if (members.length > 0) {
+        const randomMember = members[Math.floor(Math.random() * members.length)];
+        const delta = Math.random() > 0.5 ? 1 : -1;
+        reputationChanges.push({ memberId: randomMember.id, delta });
+        result.reputationChanges++;
+      }
+      // Don't return early — continue to apply collected changes
     }
 
     // 4. 随机生成消息
@@ -718,7 +749,7 @@ export const useACPStore = create<ACPState>(persistMiddleware((set, get) => ({
     });
 
     newMessages.forEach(({ from, to, type, content }) => {
-      eventBus.emit('message:sent', { from, to, type, content });
+      eventBus.emit('message:sent', { from, to, type, content, id: '', timestamp: Date.now(), read: false });
     });
 
     eventBus.emit('system:tick', result);
@@ -727,6 +758,11 @@ export const useACPStore = create<ACPState>(persistMiddleware((set, get) => ({
 
 // ============ 派生状态选择器 ============
 
+/**
+ * @deprecated This selector creates a new object on every call, causing unnecessary re-renders.
+ * Use `useMemo(() => calculateStats(...), [dependencies])` directly in components instead.
+ * Kept for backward compatibility — no component currently imports this.
+ */
 export const useACPStats = (): Stats => useACPStore((state) => {
   const { organization, tasks, messages } = state;
   return calculateStats(organization.members, tasks, messages);

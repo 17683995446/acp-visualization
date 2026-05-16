@@ -49,22 +49,20 @@ export const persistMiddleware =
     // 先调用 config 创建原始 store，确保初始状态完整定义
     const result = config(set, get, api);
 
-    // 在微任务中加载持久化数据，确保在 store 初始化之后
-    setTimeout(() => {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          const version = parsed._version || 1;
-          const migrated = version < DATA_VERSION ? migrate(parsed, version) : parsed;
-          // 使用 api.getState() 获取完整的初始状态，再覆盖持久化数据
-          const currentState = api.getState();
-          api.setState({ ...currentState, ...migrated });
-        }
-      } catch (e) {
-        console.error('Failed to load persisted state:', e);
+    // 同步加载持久化数据，避免 UI 闪烁（setTimeout 会导致初始渲染后再覆盖状态）
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const version = parsed._version || 1;
+        const migrated = version < DATA_VERSION ? migrate(parsed, version) : parsed;
+        const currentState = api.getState();
+        const { _version, ...persistedState } = migrated;
+        api.setState({ ...currentState, ...persistedState });
       }
-    }, 0);
+    } catch (e) {
+      console.error('Failed to load persisted state:', e);
+    }
 
     // 防抖持久化：避免每次状态变更都写入 localStorage
     let persistTimer: ReturnType<typeof setTimeout> | null = null;

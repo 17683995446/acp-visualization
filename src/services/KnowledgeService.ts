@@ -17,7 +17,9 @@ export class KnowledgeService {
   }
 
   static getOrphanNodes(nodes: KnowledgeNode[]): KnowledgeNode[] {
-    return nodes.filter(n => n.connections.length === 0);
+    const connectedIds = new Set<string>();
+    nodes.forEach(n => n.connections.forEach(c => connectedIds.add(c)));
+    return nodes.filter(n => n.connections.length === 0 && !connectedIds.has(n.id));
   }
 
   static getMostConnected(nodes: KnowledgeNode[], limit: number = 5): Array<{ node: KnowledgeNode; connectionCount: number }> {
