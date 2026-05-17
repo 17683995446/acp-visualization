@@ -15,6 +15,7 @@ import {
 import { useACPStore } from '../store/acpStore';
 import { EvaluationService } from '../services';
 import { ProgressBar } from '../components/ui';
+import { EvaluationRadarChart } from '../components/charts';
 
 interface ScoreBarProps {
   dimension: string;
@@ -128,6 +129,12 @@ const Evaluation: React.FC = () => {
             <p className="text-sm opacity-80 mt-2">基于 {evaluationScores.length} 个维度评估</p>
           </div>
         </div>
+      </div>
+
+      {/* Multi-dimensional Radar Chart */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">多维评估雷达图</h2>
+        <EvaluationRadarChart scores={evaluationScores} size="lg" />
       </div>
 
       {/* Score Details */}

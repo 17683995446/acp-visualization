@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { useACPStore } from '../store/acpStore';
+import { StaggerList, StaggerItem } from '../components/animation';
 import { TaskDependencyGraph } from '../components/TaskDependencyGraph';
 import { SearchBar, ConfirmDialog } from '../components/ui';
 import { useFilteredTasks } from '../hooks';
@@ -324,9 +325,11 @@ const Tasks: React.FC = () => {
       {/* 任务列表视图 */}
       {viewMode === 'list' && (
         <>
+          <StaggerList>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTasks.map((task) => (
-              <div key={task.id} className="relative">
+              <StaggerItem key={task.id}>
+              <div className="relative">
                 {/* 选择复选框 */}
                 <div className="absolute top-3 left-3 z-10">
                   <button
@@ -355,8 +358,10 @@ const Tasks: React.FC = () => {
                   onDelete={handleDeleteClick}
                 />
               </div>
+              </StaggerItem>
             ))}
           </div>
+          </StaggerList>
 
           {/* 空状态 */}
           {filteredTasks.length === 0 && (

@@ -22,11 +22,13 @@ import { calculateStats } from '../store/helpers';
 import { exportPlatform, importPlatform } from '../utils/export';
 import { useToast } from '../components';
 import { StatCard, ProgressBar } from '../components/ui';
+import { FadeIn } from '../components/animation';
 import SchedulerConfigPanel from '../components/SchedulerConfig';
 import SimulationPanel from '../components/SimulationPanel';
 import DataManagementPanel from '../components/DataManagementPanel';
 import ActivityFeed from '../components/ActivityFeed';
 import { useSimulation } from '../hooks/useSimulation';
+import { TaskCompletionChart, AgentUtilizationChart, MessageStatsChart } from '../components/charts';
 
 const Dashboard: React.FC = () => {
   const {
@@ -197,6 +199,7 @@ const Dashboard: React.FC = () => {
       />
 
       {/* Header */}
+      <FadeIn delay={0}>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center space-x-3">
@@ -246,8 +249,10 @@ const Dashboard: React.FC = () => {
           </button>
         </div>
       </div>
+      </FadeIn>
 
       {/* Stat Cards */}
+      <FadeIn delay={0.1}>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => (
           <StatCard
@@ -260,8 +265,10 @@ const Dashboard: React.FC = () => {
           />
         ))}
       </div>
+      </FadeIn>
 
       {/* Main Content Grid */}
+      <FadeIn delay={0.2}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Task Progress */}
         <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
@@ -335,8 +342,10 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+      </FadeIn>
 
       {/* Bottom Section */}
+      <FadeIn delay={0.3}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Real-time Logs */}
         <div className="bg-gray-900 rounded-xl shadow-sm p-6 border border-gray-700">
@@ -412,8 +421,33 @@ const Dashboard: React.FC = () => {
           <SimulationPanel />
         </div>
       </div>
+      </FadeIn>
+
+      {/* Data Trends Charts */}
+      <FadeIn delay={0.4}>
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center space-x-2">
+          <TrendingUp className="w-5 h-5 text-primary-500" />
+          <span>数据趋势</span>
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
+            <TaskCompletionChart tasks={tasks} />
+          </div>
+          <div className="space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
+              <AgentUtilizationChart members={organization.members} />
+            </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-100 dark:border-gray-700">
+              <MessageStatsChart messages={messages} />
+            </div>
+          </div>
+        </div>
+      </div>
+      </FadeIn>
 
       {/* Data Management & Activity Feed */}
+      <FadeIn delay={0.5}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <DataManagementPanel />
@@ -422,6 +456,7 @@ const Dashboard: React.FC = () => {
           <ActivityFeed />
         </div>
       </div>
+      </FadeIn>
     </div>
   );
 };

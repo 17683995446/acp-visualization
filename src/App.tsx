@@ -7,6 +7,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { ErrorBoundary, ToastProvider, GlobalSearchModal, NotFound, Footer } from './components';
+import { PageTransition } from './components/animation';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useKeyboard } from './hooks/useKeyboard';
 import { navItems } from './constants/navItems';
@@ -168,19 +169,21 @@ function AppContent() {
           {/* Main Content */}
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
             <ErrorBoundary>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/organization" element={<Organization />} />
-                <Route path="/tasks" element={<Tasks />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/knowledge" element={<Knowledge />} />
-                <Route path="/architecture" element={<Architecture />} />
-                <Route path="/comparison" element={<Comparison />} />
-                <Route path="/evaluation" element={<Evaluation />} />
-                <Route path="/tools" element={<Tools />} />
-                <Route path="/404" element={<NotFound />} />
-                <Route path="*" element={<Navigate to="/404" replace />} />
-              </Routes>
+              <PageTransition>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/organization" element={<Organization />} />
+                  <Route path="/tasks" element={<Tasks />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/knowledge" element={<Knowledge />} />
+                  <Route path="/architecture" element={<Architecture />} />
+                  <Route path="/comparison" element={<Comparison />} />
+                  <Route path="/evaluation" element={<Evaluation />} />
+                  <Route path="/tools" element={<Tools />} />
+                  <Route path="/404" element={<NotFound />} />
+                  <Route path="*" element={<Navigate to="/404" replace />} />
+                </Routes>
+              </PageTransition>
             </ErrorBoundary>
           </main>
 
