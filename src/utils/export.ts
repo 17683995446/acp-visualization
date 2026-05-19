@@ -43,6 +43,19 @@ function validateImportData(data: any): { valid: boolean; errors: string[] } {
   if (!Array.isArray(data.knowledgeNodes)) {
     errors.push('knowledgeNodes 不是数组');
   }
+  if (!data.evaluation || typeof data.evaluation !== 'object') {
+    errors.push('缺少评估数据 (evaluation)');
+  } else {
+    if (typeof data.evaluation.totalScore !== 'number') {
+      errors.push('evaluation.totalScore 不是数字');
+    }
+    if (typeof data.evaluation.rating !== 'string') {
+      errors.push('evaluation.rating 不是字符串');
+    }
+  }
+  if (!Array.isArray(data.evaluationScores)) {
+    errors.push('evaluationScores 不是数组');
+  }
 
   return { valid: errors.length === 0, errors };
 }

@@ -8,3 +8,4 @@ export { default as Footer } from './Footer';
 export { default as SimulationPanel } from './SimulationPanel';
 export { default as DataManagementPanel } from './DataManagementPanel';
 export { default as ActivityFeed } from './ActivityFeed';
+export { default as UndoRedoPanel } from './UndoRedoPanel';

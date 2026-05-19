@@ -31,20 +31,18 @@ import { useSimulation } from '../hooks/useSimulation';
 import { TaskCompletionChart, AgentUtilizationChart, MessageStatsChart } from '../components/charts';
 
 const Dashboard: React.FC = () => {
-  const {
-    organization,
-    tasks,
-    logs,
-    isSimulating,
-    toggleSimulation,
-    runSchedulerTick,
-    simulationInterval,
-    lastSchedulerResult,
-    messages,
-    knowledgeNodes,
-    evaluation,
-    evaluationScores,
-  } = useACPStore();
+  const organization = useACPStore(s => s.organization);
+  const tasks = useACPStore(s => s.tasks);
+  const logs = useACPStore(s => s.logs);
+  const isSimulating = useACPStore(s => s.isSimulating);
+  const toggleSimulation = useACPStore(s => s.toggleSimulation);
+  const runSchedulerTick = useACPStore(s => s.runSchedulerTick);
+  const simulationInterval = useACPStore(s => s.simulationInterval);
+  const lastSchedulerResult = useACPStore(s => s.lastSchedulerResult);
+  const messages = useACPStore(s => s.messages);
+  const knowledgeNodes = useACPStore(s => s.knowledgeNodes);
+  const evaluation = useACPStore(s => s.evaluation);
+  const evaluationScores = useACPStore(s => s.evaluationScores);
 
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -134,12 +132,12 @@ const Dashboard: React.FC = () => {
     }
   }, [toast]);
 
-  const statCards = [
+  const statCards = useMemo(() => [
     { label: '活跃 Agent', value: stats.activeAgents, icon: Users, color: 'from-blue-500 to-blue-600', sub: `${stats.busyAgents} 忙碌 / ${stats.idleAgents} 空闲` },
     { label: '进行中任务', value: stats.activeTasks, icon: ListTodo, color: 'from-orange-500 to-orange-600', sub: `${stats.pendingTasks} 待处理` },
     { label: '已完成任务', value: stats.completedTasks, icon: CheckCircle, color: 'from-green-500 to-green-600', sub: `平均进度 ${stats.avgProgress.toFixed(1)}%` },
     { label: '消息总量', value: stats.totalMessages, icon: MessageSquare, color: 'from-purple-500 to-purple-600', sub: `实时通信中` },
-  ];
+  ], [stats]);
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -360,7 +358,7 @@ const Dashboard: React.FC = () => {
             {logs.length === 0 ? (
               <p className="text-gray-600 text-center mt-8">启动模拟引擎以查看实时日志...</p>
             ) : (
-              logs.map(log => (
+              logs.slice(0, 100).map(log => (
                 <div key={log.id} className="flex items-start space-x-2">
                   <span className="text-gray-600 text-xs shrink-0">
                     {new Date(log.timestamp).toLocaleTimeString('zh-CN')}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle } from 'lucide-react';
 import { Modal } from '../../components/Modal';
 import { statusConfig, statusEditOptions } from './constants';
@@ -13,6 +13,13 @@ interface EditStatusModalProps {
 
 const EditStatusModal: React.FC<EditStatusModalProps> = ({ open, onClose, currentStatus, onSubmit }) => {
   const [selected, setSelected] = useState<TaskStatus>(currentStatus);
+
+  // 弹窗打开时重置 selected 为当前状态
+  useEffect(() => {
+    if (open) {
+      setSelected(currentStatus);
+    }
+  }, [open, currentStatus]);
 
   const handleSubmit = () => {
     onSubmit(selected);

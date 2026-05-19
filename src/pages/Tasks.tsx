@@ -30,14 +30,12 @@ import { TaskDetailPanel } from './tasks/TaskDetailPanel';
 type ViewMode = 'list' | 'graph';
 
 const Tasks: React.FC = () => {
-  const {
-    tasks,
-    organization,
-    addTask,
-    updateTask,
-    deleteTask,
-    assignTask,
-  } = useACPStore();
+  const tasks = useACPStore(s => s.tasks);
+  const organization = useACPStore(s => s.organization);
+  const addTask = useACPStore(s => s.addTask);
+  const updateTask = useACPStore(s => s.updateTask);
+  const deleteTask = useACPStore(s => s.deleteTask);
+  const assignTask = useACPStore(s => s.assignTask);
 
   const [filter, setFilter] = useState<TaskStatus | 'all'>('all');
   const [search, setSearch] = useState('');
@@ -337,6 +335,9 @@ const Tasks: React.FC = () => {
                       e.stopPropagation();
                       toggleTaskSelection(task.id);
                     }}
+                    role="checkbox"
+                    aria-checked={selectedTaskIds.has(task.id)}
+                    aria-label={`选择任务 ${task.title}`}
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                       selectedTaskIds.has(task.id)
                         ? 'bg-primary-500 border-primary-500 text-white'

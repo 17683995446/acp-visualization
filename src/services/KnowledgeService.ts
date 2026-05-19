@@ -2,6 +2,7 @@ import type { KnowledgeNode } from '../types';
 
 export class KnowledgeService {
   static searchByQuery(nodes: KnowledgeNode[], query: string): KnowledgeNode[] {
+    if (!query || query.trim() === '') return [];
     const q = query.toLowerCase();
     return nodes.filter(n =>
       n.name.toLowerCase().includes(q) ||
@@ -13,7 +14,8 @@ export class KnowledgeService {
   static getConnections(nodes: KnowledgeNode[], nodeId: string): KnowledgeNode[] {
     const node = nodes.find(n => n.id === nodeId);
     if (!node) return [];
-    return nodes.filter(n => node.connections.includes(n.id));
+    const connectionSet = new Set(node.connections);
+    return nodes.filter(n => connectionSet.has(n.id));
   }
 
   static getOrphanNodes(nodes: KnowledgeNode[]): KnowledgeNode[] {

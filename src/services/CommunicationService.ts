@@ -20,13 +20,21 @@ export class CommunicationService {
     return messages.filter(m => m.to === memberId && !m.read).length;
   }
 
-  static getMessageStats(messages: Message[]) {
-    return {
+  static getMessageStats(messages: Message[]): { total: number; task: number; notification: number; request: number; response: number; [key: string]: number } {
+    const result: { total: number; task: number; notification: number; request: number; response: number; [key: string]: number } = {
       total: messages.length,
-      task: messages.filter(m => m.type === 'task').length,
-      notification: messages.filter(m => m.type === 'notification').length,
-      request: messages.filter(m => m.type === 'request').length,
-      response: messages.filter(m => m.type === 'response').length,
+      task: 0,
+      notification: 0,
+      request: 0,
+      response: 0,
     };
+    for (const m of messages) {
+      if (m.type in result) {
+        result[m.type]++;
+      } else {
+        result[m.type] = 1;
+      }
+    }
+    return result;
   }
 }

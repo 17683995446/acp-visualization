@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, CheckCircle } from 'lucide-react';
 import { Modal } from '../../components/Modal';
 
@@ -12,6 +12,13 @@ interface AssignTaskModalProps {
 
 const AssignTaskModal: React.FC<AssignTaskModalProps> = ({ open, onClose, taskId, idleAgents, onAssign }) => {
   const [selectedAgent, setSelectedAgent] = useState<string>('');
+
+  // 弹窗打开时重置 selectedAgent
+  useEffect(() => {
+    if (open) {
+      setSelectedAgent('');
+    }
+  }, [open]);
 
   const handleSubmit = () => {
     if (!selectedAgent) return;

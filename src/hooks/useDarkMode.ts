@@ -1,26 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useThemeStore } from '../store/themeStore';
 
+/**
+ * Dark Mode hook — 委托给 themeStore，确保单一状态源
+ */
 export function useDarkMode() {
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('acp-dark-mode');
-      if (stored !== null) return stored === 'true';
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
+  const isDark = useThemeStore((s) => s.isDarkMode);
+  const toggleDarkMode = useThemeStore((s) => s.toggleDarkMode);
 
-  useEffect(() => {
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    localStorage.setItem('acp-dark-mode', String(isDark));
-  }, [isDark]);
-
-  const toggle = useCallback(() => setIsDark(prev => !prev), []);
+  const toggle = useCallback(() => toggleDarkMode(), [toggleDarkMode]);
 
   return { isDark, toggle };
 }

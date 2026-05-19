@@ -8,6 +8,7 @@ import {
   GitCompare,
   MessageSquare,
   Network,
+  BrainCircuit,
 } from 'lucide-react';
 
 export const navItems = [
@@ -19,5 +20,6 @@ export const navItems = [
   { to: '/architecture', icon: GitBranch, label: '架构设计' },
   { to: '/comparison', icon: GitCompare, label: '方案对比' },
   { to: '/evaluation', icon: BarChart3, label: '综合评分' },
+  { to: '/analytics', icon: BrainCircuit, label: '智能分析' },
   { to: '/tools', icon: Wrench, label: '开源工具' },
 ];

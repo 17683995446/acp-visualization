@@ -24,7 +24,8 @@ export function useLocalStorage<T>(
           try {
             window.localStorage.setItem(key, JSON.stringify(valueToStore));
           } catch {
-            // Silently fail if localStorage is unavailable
+            // localStorage 写入失败时回滚 React state，保持与持久化存储一致
+            return prev;
           }
         }
         return valueToStore;

@@ -2,7 +2,7 @@
  * Evaluation 综合评分 - 升级版
  * 支持实时评分调整和重算
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   TrendingUp,
   TrendingDown,
@@ -29,6 +29,13 @@ interface ScoreBarProps {
 const ScoreBar: React.FC<ScoreBarProps> = ({ dimension, value, max, weight, description, onChange }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value);
+
+  // 在非编辑状态下，当外部 value 变化时同步 editValue
+  useEffect(() => {
+    if (!isEditing) {
+      setEditValue(value);
+    }
+  }, [value, isEditing]);
 
   const handleSave = () => {
     onChange(dimension, editValue);

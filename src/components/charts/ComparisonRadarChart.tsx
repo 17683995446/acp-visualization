@@ -58,10 +58,11 @@ export const ComparisonRadarChart: React.FC<ComparisonRadarChartProps> = ({
   title = '方案对比雷达图',
 }) => {
   const data = useMemo<RadarDataPoint[]>(() => {
-    if (solutions.length === 0) return [];
+    if (!solutions || solutions.length === 0) return [];
 
     // Use the first solution's scores to determine dimensions
-    const dimensions = solutions[0].scores.map((s) => s.dimension);
+    const dimensions = solutions[0]?.scores?.map((s) => s.dimension) ?? [];
+    if (dimensions.length === 0) return [];
 
     return dimensions.map((dim) => {
       const point: RadarDataPoint = {
@@ -90,7 +91,7 @@ export const ComparisonRadarChart: React.FC<ComparisonRadarChartProps> = ({
           {title}
         </h3>
       )}
-      <div className="w-full h-80">
+      <div style={{ width: '100%', height: 320, minWidth: 200, minHeight: 200 }}>
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
             <PolarGrid

@@ -2,7 +2,7 @@
  * Messages 消息中心 - Agent 通信/消息管理页面
  * 基于 Zustand Store 驱动，支持消息发送、过滤与统计
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   MessageSquare,
   Send,
@@ -39,11 +39,21 @@ const filterOptions: { value: FilterType; label: string }[] = [
 ];
 
 const Messages: React.FC = () => {
-  const { messages, organization, sendMessage, markMessageAsRead } = useACPStore();
+  const messages = useACPStore(s => s.messages);
+  const organization = useACPStore(s => s.organization);
+  const sendMessage = useACPStore(s => s.sendMessage);
+  const markAllMessagesAsRead = useACPStore(s => s.markAllMessagesAsRead);
   const members = organization.members;
 
   // 表单状态
   const [fromId, setFromId] = useState<string>(members[0]?.id ?? '');
+
+  // 当 members 从空变为非空时，自动设置 fromId 默认值
+  useEffect(() => {
+    if (members.length > 0 && !fromId) {
+      setFromId(members[0].id);
+    }
+  }, [members, fromId]);
   const [toId, setToId] = useState<string>('');
   const [msgType, setMsgType] = useState<MessageType>('notification');
   const [content, setContent] = useState<string>('');
@@ -98,11 +108,7 @@ const Messages: React.FC = () => {
 
   // 全部标为已读
   const handleMarkAllRead = () => {
-    messages.forEach((m) => {
-      if (!m.read) {
-        markMessageAsRead(m.id);
-      }
-    });
+    markAllMessagesAsRead();
   };
 
   // 根据成员 ID 查找名称

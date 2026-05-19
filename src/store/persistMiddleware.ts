@@ -2,6 +2,9 @@ import type { StateCreator } from 'zustand';
 import type { ACPState } from './acpStore';
 import { eventBus } from '../services/eventBus';
 
+// 模块级别的 beforeunload 监听器引用，用于防止内存泄漏
+let beforeUnloadHandler: (() => void) | null = null;
+
 const STORAGE_KEY = 'acp-store-v1';
 const DATA_VERSION = 2;
 
@@ -67,30 +70,47 @@ export const persistMiddleware =
     // 防抖持久化：避免每次状态变更都写入 localStorage
     let persistTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // 订阅状态变更并保存
-    api.subscribe((state) => {
-      // 排除不可序列化的字段
+    // 立即持久化当前状态（供防抖和 beforeunload 共用）
+    function persistNow(): void {
+      const currentState = api.getState();
       const persistState = {
         _version: DATA_VERSION,
-        organization: state.organization,
-        tasks: state.tasks,
-        messages: state.messages,
-        knowledgeNodes: state.knowledgeNodes,
-        evaluation: state.evaluation,
-        evaluationScores: state.evaluationScores,
-        schedulerConfig: state.schedulerConfig,
+        organization: currentState.organization,
+        tasks: currentState.tasks,
+        messages: currentState.messages,
+        knowledgeNodes: currentState.knowledgeNodes,
+        evaluation: currentState.evaluation,
+        evaluationScores: currentState.evaluationScores,
+        schedulerConfig: currentState.schedulerConfig,
       };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(persistState));
+      } catch (e) {
+        console.error('Failed to persist state to localStorage:', e);
+        eventBus.emit('system:error', { message: '数据持久化失败，本地存储可能已满' });
+      }
+    }
 
+    // 订阅状态变更并保存
+    api.subscribe(() => {
       if (persistTimer) clearTimeout(persistTimer);
-      persistTimer = setTimeout(() => {
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(persistState));
-        } catch (e) {
-          console.error('Failed to persist state to localStorage:', e);
-          eventBus.emit('system:error', { message: '数据持久化失败，本地存储可能已满' });
-        }
-      }, 500);
+      persistTimer = setTimeout(persistNow, 500);
     });
+
+    // 页面关闭前立即执行一次持久化，防止防抖导致最新状态丢失
+    const handleBeforeUnload = (): void => {
+      if (persistTimer) {
+        clearTimeout(persistTimer);
+        persistTimer = null;
+      }
+      persistNow();
+    };
+    // 移除旧的监听器（防止 HMR 或重复调用导致内存泄漏）
+    if (beforeUnloadHandler) {
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
+    }
+    beforeUnloadHandler = handleBeforeUnload;
+    window.addEventListener('beforeunload', handleBeforeUnload);
 
     return result;
   };

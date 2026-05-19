@@ -8,7 +8,8 @@ export class OrganizationService {
   static getMembersByDepartment(org: Organization, departmentId: string): Member[] {
     const dept = org.departments.find(d => d.id === departmentId);
     if (!dept) return [];
-    return org.members.filter(m => dept.members.includes(m.id));
+    const memberSet = new Set(dept.members);
+    return org.members.filter(m => memberSet.has(m.id));
   }
 
   static getTopPerformers(members: Member[], limit: number = 5): Member[] {
@@ -17,7 +18,8 @@ export class OrganizationService {
 
   static getDepartmentStats(org: Organization): Array<{ id: string; name: string; memberCount: number; avgReputation: number; budget: number }> {
     return org.departments.map(dept => {
-      const deptMembers = org.members.filter(m => dept.members.includes(m.id));
+      const memberSet = new Set(dept.members);
+      const deptMembers = org.members.filter(m => memberSet.has(m.id));
       const avgReputation = deptMembers.length > 0
         ? deptMembers.reduce((sum, m) => sum + m.reputation, 0) / deptMembers.length
         : 0;

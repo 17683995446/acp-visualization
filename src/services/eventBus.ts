@@ -42,7 +42,7 @@ class EventBus {
   private listeners: EventMap = {};
   private maxListeners: number = 50;
   private eventLog: Array<{ type: EventType; timestamp: number; data?: unknown }> = [];
-  private _isEmitting: boolean = false;
+  private _emittingTypes: Set<string> = new Set();
 
   /**
    * 订阅事件
@@ -53,7 +53,7 @@ class EventBus {
     }
 
     if (this.listeners[event].size >= this.maxListeners) {
-      console.warn(`[EventBus] Max listeners (${this.maxListeners}) reached for event: ${event}`);
+      throw new Error(`[EventBus] Max listeners (${this.maxListeners}) reached for event: ${event}`);
     }
 
     this.listeners[event].add(callback);
@@ -99,13 +99,13 @@ class EventBus {
           cb(data);
         } catch (error) {
           console.error(`[EventBus] Error in handler for "${event}":`, error);
-          // Avoid infinite recursion: don't emit system:error while already emitting
-          if (!this._isEmitting && event !== 'system:error') {
-            this._isEmitting = true;
+          // Avoid infinite recursion: don't emit system:error while already emitting the same event type
+          if (!this._emittingTypes.has(event) && event !== 'system:error') {
+            this._emittingTypes.add(event);
             try {
               this.emit('system:error', { event, error });
             } finally {
-              this._isEmitting = false;
+              this._emittingTypes.delete(event);
             }
           }
         }

@@ -57,7 +57,7 @@ export const MessageStatsChart: React.FC<MessageStatsChartProps> = ({ messages, 
       response: 0,
     };
 
-    for (const msg of messages) {
+    for (const msg of (messages ?? [])) {
       if (counts[msg.type] !== undefined) {
         counts[msg.type]++;
       }
@@ -78,7 +78,7 @@ export const MessageStatsChart: React.FC<MessageStatsChartProps> = ({ messages, 
           {title}
         </h3>
       )}
-      <div className="w-full h-64">
+      <div style={{ width: '100%', height: 256, minWidth: 200, minHeight: 200 }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
             <CartesianGrid

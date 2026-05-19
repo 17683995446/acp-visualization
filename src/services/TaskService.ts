@@ -17,7 +17,7 @@ export class TaskService {
       t.status === 'pending' &&
       t.dependencies.every(depId => {
         const dep = tasks.find(dt => dt.id === depId);
-        return !dep || dep.status === 'completed';
+        return dep && dep.status === 'completed';
       })
     );
   }
@@ -27,15 +27,30 @@ export class TaskService {
    */
   static getStats(tasks: Task[]): TaskStats {
     const total = tasks.length;
-    const pending = tasks.filter(t => t.status === 'pending').length;
-    const inProgress = tasks.filter(t => t.status === 'in_progress').length;
-    const completed = tasks.filter(t => t.status === 'completed').length;
-    const failed = tasks.filter(t => t.status === 'failed').length;
-    const blocked = tasks.filter(t => t.status === 'blocked').length;
-    const avgProgress = total > 0 ? tasks.reduce((sum, t) => sum + t.progress, 0) / total : 0;
-    const totalEstimatedTime = tasks.reduce((sum, t) => sum + t.estimatedTime, 0);
-    const totalActualTime = tasks.reduce((sum, t) => sum + (t.actualTime ?? 0), 0);
-    return { total, pending, inProgress, completed, failed, blocked, avgProgress, totalEstimatedTime, totalActualTime };
+    if (total === 0) {
+      return { total: 0, pending: 0, inProgress: 0, completed: 0, failed: 0, blocked: 0, avgProgress: 0, totalEstimatedTime: 0, totalActualTime: 0 };
+    }
+    const acc = tasks.reduce((a, t) => {
+      const statusKey = t.status as keyof typeof a;
+      if (statusKey in a && typeof a[statusKey] === 'number') {
+        (a as Record<string, number>)[statusKey]++;
+      }
+      a.progressSum += t.progress;
+      a.estimatedTimeSum += t.estimatedTime;
+      a.actualTimeSum += t.actualTime ?? 0;
+      return a;
+    }, { pending: 0, in_progress: 0, completed: 0, failed: 0, blocked: 0, scheduled: 0, progressSum: 0, estimatedTimeSum: 0, actualTimeSum: 0 } as Record<string, number>);
+    return {
+      total,
+      pending: acc.pending,
+      inProgress: acc.in_progress,
+      completed: acc.completed,
+      failed: acc.failed,
+      blocked: acc.blocked,
+      avgProgress: acc.progressSum / total,
+      totalEstimatedTime: acc.estimatedTimeSum,
+      totalActualTime: acc.actualTimeSum,
+    };
   }
 
   /**

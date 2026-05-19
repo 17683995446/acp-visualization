@@ -106,6 +106,16 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
   // ---- 动画帧引用 ----
   const rafRef = useRef<number | null>(null);
 
+  // ---- 清理 RAF（组件卸载时） ----
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, []);
+
   // ---- SVG ref ----
   const svgRef = useRef<SVGSVGElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -118,12 +128,13 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
     [svgWidth, svgHeight],
   );
 
-  // ---- 缩放处理 ----
-  const handleWheel = useCallback(
-    (e: React.WheelEvent<SVGSVGElement>) => {
+  // ---- 缩放处理（使用原生事件以支持 passive: false） ----
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const svg = svgRef.current;
-      if (!svg) return;
       const rect = svg.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
@@ -137,9 +148,13 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
       const newY = mouseY - (mouseY - transformRef.current.y) * (newScale / prevScale);
 
       setTransform({ x: newX, y: newY, scale: newScale });
-    },
-    [],
-  );
+    };
+
+    svg.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      svg.removeEventListener('wheel', handleWheel);
+    };
+  }, [svgWidth, svgHeight]);
 
   // ---- 缩放按钮 ----
   const handleZoomIn = useCallback(() => {
@@ -270,16 +285,18 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
       const clickY = (e.clientY - rect.top) / rect.height;
 
       const containerRect = container.getBoundingClientRect();
-      const targetX = containerRect.width / 2 - clickX * svgWidth * transform.scale;
-      const targetY = containerRect.height / 2 - clickY * svgHeight * transform.scale;
 
-      setTransform((prev) => ({
-        ...prev,
-        x: targetX,
-        y: targetY,
-      }));
+      setTransform((prev) => {
+        const targetX = containerRect.width / 2 - clickX * svgWidth * prev.scale;
+        const targetY = containerRect.height / 2 - clickY * svgHeight * prev.scale;
+        return {
+          ...prev,
+          x: targetX,
+          y: targetY,
+        };
+      });
     },
-    [svgWidth, svgHeight, transform.scale],
+    [svgWidth, svgHeight],
   );
 
   // ---- 计算光标样式 ----
@@ -320,7 +337,6 @@ const KnowledgeGraph: React.FC<KnowledgeGraphProps> = ({
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
             className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800"
             style={{ cursor: isDraggingOrPanning ? 'grabbing' : 'grab' }}
-            onWheel={handleWheel}
             onMouseDown={handleSvgMouseDown}
           >
             {/* 渐变定义 */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import type { KnowledgeNode } from '../../types';
 import { TYPE_CONFIG, ALL_TYPES } from './constants';
@@ -15,6 +15,7 @@ const AddNodeModal: React.FC<AddNodeModalProps> = ({ open, onClose, knowledgeNod
   const [formName, setFormName] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formConnections, setFormConnections] = useState('');
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // N-2: 弹窗打开时重置表单
   useEffect(() => {
@@ -25,6 +26,19 @@ const AddNodeModal: React.FC<AddNodeModalProps> = ({ open, onClose, knowledgeNod
       setFormConnections('');
     }
   }, [open]);
+
+  // Escape 键关闭功能 — 使用全局事件监听确保可靠触发
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -59,7 +73,13 @@ const AddNodeModal: React.FC<AddNodeModalProps> = ({ open, onClose, knowledgeNod
       />
 
       {/* 弹窗内容 */}
-      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-node-modal-title"
+        className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
+      >
         {/* 弹窗头部 */}
         <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-gray-800 dark:to-gray-800">
           <div className="flex items-center justify-between">
@@ -68,7 +88,7 @@ const AddNodeModal: React.FC<AddNodeModalProps> = ({ open, onClose, knowledgeNod
                 <Plus className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">添加知识节点</h2>
+                <h2 id="add-node-modal-title" className="text-lg font-bold text-gray-900 dark:text-white">添加知识节点</h2>
                 <p className="text-xs text-gray-500 dark:text-gray-400">向知识图谱中添加新的节点</p>
               </div>
             </div>

@@ -7,8 +7,12 @@ export { generateId } from '../store/helpers';
  * @returns 相对时间字符串，如 "2小时前"、"刚刚"
  */
 export function formatTime(timestamp: number): string {
+  if (timestamp == null || typeof timestamp !== 'number' || !Number.isFinite(timestamp)) {
+    return '刚刚';
+  }
+  if (timestamp <= 0) return '刚刚';
   const diff = Date.now() - timestamp;
-  if (diff < 0) return '刚刚';
+  if (diff < 0 || diff > 100 * 365.25 * 24 * 60 * 60 * 1000) return '刚刚';
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
@@ -59,6 +63,9 @@ export function formatDateTime(timestamp: number): string {
  * @returns 格式化的持续时间字符串 "Xh Ym"
  */
 export function formatDuration(minutes: number): string {
+  if (minutes == null || typeof minutes !== 'number' || !Number.isFinite(minutes)) {
+    return '<1m';
+  }
   if (minutes < 1) {
     return '<1m';
   }

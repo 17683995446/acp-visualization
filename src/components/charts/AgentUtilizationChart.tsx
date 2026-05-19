@@ -59,6 +59,9 @@ const CustomTooltip = ({ active, payload }: {
 
 export const AgentUtilizationChart: React.FC<AgentUtilizationChartProps> = ({ members, title = 'Agent 状态分布' }) => {
   const data = useMemo<SegmentData[]>(() => {
+    if (!members || !Array.isArray(members)) {
+      return [{ name: 'offline', value: 1, color: COLORS.offline }];
+    }
     const idle = members.filter(m => m.status === 'idle').length;
     const busy = members.filter(m => m.status === 'busy').length;
     const offline = members.filter(m => m.status === 'offline').length;
@@ -76,7 +79,7 @@ export const AgentUtilizationChart: React.FC<AgentUtilizationChartProps> = ({ me
     return segments;
   }, [members]);
 
-  const total = members.length;
+  const total = members?.length ?? 0;
 
   // Calculate center label
   const centerLabel = useMemo(() => {
@@ -91,7 +94,7 @@ export const AgentUtilizationChart: React.FC<AgentUtilizationChartProps> = ({ me
           {title}
         </h3>
       )}
-      <div className="w-full h-64 relative">
+      <div style={{ width: '100%', height: 256, minWidth: 200, minHeight: 200 }} className="relative">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

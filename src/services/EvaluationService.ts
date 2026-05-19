@@ -2,12 +2,13 @@ import type { Score, Evaluation } from '../types';
 
 export class EvaluationService {
   static calculateTotalScore(scores: Score[]): number {
-    const totalWeight = scores.reduce((sum, s) => sum + s.weight, 0);
+    const validScores = scores.filter(s => s.max > 0);
+    const totalWeight = validScores.reduce((sum, s) => sum + s.weight, 0);
     if (totalWeight <= 0) return 0;
     return Math.round(
-      scores.reduce((sum, s) => {
-        if (s.max <= 0) return sum;
-        return sum + (s.value / s.max) * (s.weight / totalWeight) * 100;
+      validScores.reduce((sum, s) => {
+        const clampedValue = Math.max(0, Math.min(s.value, s.max));
+        return sum + (clampedValue / s.max) * (s.weight / totalWeight) * 100;
       }, 0)
     );
   }
@@ -40,10 +41,10 @@ export class EvaluationService {
   }
 
   static findWeaknesses(scores: Score[], threshold: number = 75): Score[] {
-    return scores.filter(s => s.value < threshold);
+    return scores.filter(s => s.max > 0 && s.value / s.max < threshold / 100);
   }
 
   static findStrengths(scores: Score[], threshold: number = 85): Score[] {
-    return scores.filter(s => s.value >= threshold);
+    return scores.filter(s => s.max > 0 && s.value / s.max >= threshold / 100);
   }
 }

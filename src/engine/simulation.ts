@@ -9,6 +9,11 @@
 import { useACPStore } from '../store/acpStore';
 import { eventBus } from '../services/eventBus';
 
+// HMR 清理
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => destroy());
+}
+
 // ============ 类型定义 ============
 
 export interface SimulationConfig {
@@ -65,21 +70,17 @@ function notifyListeners(): void {
 // ============ 核心 Tick 逻辑 ============
 
 function simulationTick(): void {
-  const store = useACPStore.getState();
-
-  state.tickCount++;
-  state.lastTickAt = Date.now();
-
-  // 委托所有状态变更给 store 的 runSchedulerTick
-  store.runSchedulerTick();
-
-  // 发出模拟引擎专用事件
-  eventBus.emit('simulation:tick', {
-    tickCount: state.tickCount,
-    timestamp: state.lastTickAt,
-  });
-
-  notifyListeners();
+  try {
+    const store = useACPStore.getState();
+    state.tickCount++;
+    state.lastTickAt = Date.now();
+    store.runSchedulerTick();
+    eventBus.emit('simulation:tick', { tickCount: state.tickCount, timestamp: state.lastTickAt });
+    notifyListeners();
+  } catch (error) {
+    console.error('[Simulation] Tick failed:', error);
+    eventBus.emit('system:error', { message: '模拟引擎 tick 失败', error });
+  }
 }
 
 // ============ 公共 API ============
@@ -98,7 +99,7 @@ export function startSimulation(): void {
   eventBus.emit('system:simulationStarted');
   useACPStore.getState().addLog('success', '模拟引擎已启动');
 
-  intervalId = setInterval(simulationTick, state.config.tickInterval);
+  intervalId = setInterval(simulationTick, Math.max(100, state.config.tickInterval || 3000));
 }
 
 /**
@@ -171,4 +172,23 @@ export function onSimulationStateChange(
   return () => {
     listeners.delete(listener);
   };
+}
+
+/**
+ * 销毁模拟引擎，清理所有状态
+ * 用于 HMR 热更新或测试场景下重置模块级状态
+ */
+export function destroy(): void {
+  if (intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+  refCount = 0;
+  state = {
+    isRunning: false,
+    tickCount: 0,
+    lastTickAt: null,
+    config: { ...DEFAULT_SIMULATION_CONFIG },
+  };
+  listeners.clear();
 }

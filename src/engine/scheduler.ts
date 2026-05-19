@@ -41,7 +41,7 @@ export function calculateMatchScore(
 ): { score: number; reason: string } {
   // 1. Capability match (check if agent capabilities align with task)
   // Use task description keywords to match against agent capabilities
-  const taskKeywords = task.title.toLowerCase() + ' ' + task.description.toLowerCase();
+  const taskKeywords = (task.title || '').toLowerCase() + ' ' + (task.description || '').toLowerCase();
   const capabilityMatches = agent.capabilities.filter(cap =>
     taskKeywords.includes(cap.toLowerCase())
   ).length;
@@ -126,7 +126,7 @@ export function scheduleAll(
   const priorityOrder: Record<string, number> = { [TASK_PRIORITY.P0]: 0, [TASK_PRIORITY.P1]: 1, [TASK_PRIORITY.P2]: 2, [TASK_PRIORITY.P3]: 3 };
   const pendingTasks = tasks
     .filter(t => t.status === TASK_STATUS.PENDING)
-    .filter(t => t.dependencies.every(depId => {
+    .filter(t => (t.dependencies || []).every(depId => {
       const dep = tasks.find(dt => dt.id === depId);
       return !dep || dep.status === TASK_STATUS.COMPLETED;
     }))

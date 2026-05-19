@@ -39,8 +39,8 @@ export function computeLayout(nodes: KnowledgeNode[], width: number, height: num
     });
   });
 
-  // 力导向迭代
-  const iterations = 120;
+  // 力导向迭代 - 根据节点数量动态调整迭代次数
+  const iterations = nodes.length > 50 ? 40 : 80;
   const repulsionStrength = 8000;
   const attractionStrength = 0.005;
   const centerStrength = 0.01;

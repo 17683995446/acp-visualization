@@ -55,6 +55,7 @@ export const EvaluationRadarChart: React.FC<EvaluationRadarChartProps> = ({
   title = '评估雷达图',
 }) => {
   const data = useMemo(() => {
+    if (!scores || !Array.isArray(scores)) return [];
     return scores.map((score) => ({
       dimension: score.dimension,
       current: score.value,
@@ -71,7 +72,7 @@ export const EvaluationRadarChart: React.FC<EvaluationRadarChartProps> = ({
           {title}
         </h3>
       )}
-      <div className="w-full" style={{ height: chartSize }}>
+      <div style={{ width: '100%', height: chartSize, minWidth: 200, minHeight: 200 }}>
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
             <PolarGrid

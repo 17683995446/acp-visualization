@@ -46,13 +46,12 @@ describe('TaskService', () => {
       expect(TaskService.getAssignableTasks(tasks)[0].id).toBe('b');
     });
 
-    it('should treat missing dependencies as satisfied', () => {
+    it('should treat missing dependencies as blocking', () => {
       const tasks: Task[] = [
         { id: 'a', title: 'A', description: '', status: 'pending', priority: 'P1', dependencies: ['x'], progress: 0, estimatedTime: 10, createdAt: Date.now() },
       ];
-      // Missing dependency 'x' is treated as satisfied, so task 'a' is assignable
-      expect(TaskService.getAssignableTasks(tasks)).toHaveLength(1);
-      expect(TaskService.getAssignableTasks(tasks)[0].id).toBe('a');
+      // Missing dependency 'x' should block the task, so no tasks are assignable
+      expect(TaskService.getAssignableTasks(tasks)).toHaveLength(0);
     });
   });
 

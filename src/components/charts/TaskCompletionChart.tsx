@@ -2,7 +2,7 @@
  * TaskCompletionChart - 任务完成趋势堆叠面积图
  * 展示过去12个时间单位的任务状态变化
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -60,12 +60,14 @@ const CustomTooltip = ({ active, payload, label }: {
 };
 
 export const TaskCompletionChart: React.FC<TaskCompletionChartProps> = ({ tasks, title = '任务完成趋势' }) => {
+  const timeRef = useRef(Date.now());
   const data = useMemo<TimeSeriesPoint[]>(() => {
-    const now = new Date();
-    const completedCount = tasks.filter(t => t.status === 'completed').length;
-    const inProgressCount = tasks.filter(t => t.status === 'in_progress').length;
-    const pendingCount = tasks.filter(t => t.status === 'pending' || t.status === 'scheduled').length;
-    const failedCount = tasks.filter(t => t.status === 'failed').length;
+    const tasksArray = tasks ?? [];
+    const now = new Date(timeRef.current);
+    const completedCount = tasksArray.filter(t => t.status === 'completed').length;
+    const inProgressCount = tasksArray.filter(t => t.status === 'in_progress').length;
+    const pendingCount = tasksArray.filter(t => t.status === 'pending' || t.status === 'scheduled').length;
+    const failedCount = tasksArray.filter(t => t.status === 'failed').length;
 
     const points: TimeSeriesPoint[] = [];
     for (let i = 11; i >= 0; i--) {
@@ -104,7 +106,7 @@ export const TaskCompletionChart: React.FC<TaskCompletionChartProps> = ({ tasks,
           {title}
         </h3>
       )}
-      <div className="w-full h-64">
+      <div style={{ width: '100%', height: 256, minWidth: 200, minHeight: 200 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
             <defs>

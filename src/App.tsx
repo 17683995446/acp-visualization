@@ -1,30 +1,47 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import {
   Sun,
   Moon,
   Search,
   BookOpen,
+  FolderOpen,
+  Palette,
 } from 'lucide-react';
 import { ErrorBoundary, ToastProvider, GlobalSearchModal, NotFound, Footer } from './components';
+import ScenarioPanel from './components/ScenarioPanel';
+import ThemePanel from './components/ThemePanel';
 import { PageTransition } from './components/animation';
 import { useDarkMode } from './hooks/useDarkMode';
 import { useKeyboard } from './hooks/useKeyboard';
 import { navItems } from './constants/navItems';
 
-import Dashboard from './pages/Dashboard';
-import Organization from './pages/Organization';
-import Tasks from './pages/Tasks';
-import Architecture from './pages/Architecture';
-import Evaluation from './pages/Evaluation';
-import Tools from './pages/Tools';
-import Comparison from './pages/Comparison';
-import Messages from './pages/Messages';
-import Knowledge from './pages/Knowledge';
+// 路由级懒加载 — 减少首屏 bundle 体积
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Organization = lazy(() => import('./pages/Organization'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const Architecture = lazy(() => import('./pages/Architecture'));
+const Evaluation = lazy(() => import('./pages/Evaluation'));
+const Tools = lazy(() => import('./pages/Tools'));
+const Comparison = lazy(() => import('./pages/Comparison'));
+const Messages = lazy(() => import('./pages/Messages'));
+const Knowledge = lazy(() => import('./pages/Knowledge'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+
+// 页面加载 fallback
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500" />
+    </div>
+  );
+}
 
 function AppContent() {
   const { isDark, toggle: toggleDarkMode } = useDarkMode();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [scenarioPanelOpen, setScenarioPanelOpen] = useState(false);
+  const [themePanelOpen, setThemePanelOpen] = useState(false);
 
   const openSearch = useCallback(() => {
     setSearchOpen(true);
@@ -33,6 +50,9 @@ function AppContent() {
   const closeSearch = useCallback(() => {
     setSearchOpen(false);
   }, []);
+
+  const handleScenarioPanelClose = useCallback(() => setScenarioPanelOpen(false), []);
+  const handleThemePanelClose = useCallback(() => setThemePanelOpen(false), []);
 
   const shortcuts = useMemo(() => [
     {
@@ -108,6 +128,24 @@ function AppContent() {
                 </nav>
 
                 <div className="flex items-center space-x-2">
+                  {/* 主题设置按钮 */}
+                  <button
+                    onClick={() => setThemePanelOpen(true)}
+                    className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    title="主题设置"
+                  >
+                    <Palette className="w-4 h-4" />
+                    <span className="hidden sm:inline">主题</span>
+                  </button>
+                  {/* 场景管理按钮 */}
+                  <button
+                    onClick={() => setScenarioPanelOpen(true)}
+                    className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    title="场景管理"
+                  >
+                    <FolderOpen className="w-4 h-4" />
+                    <span className="hidden sm:inline">场景</span>
+                  </button>
                   {/* 全局搜索按钮 */}
                   <button
                     onClick={openSearch}
@@ -170,19 +208,22 @@ function AppContent() {
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
             <ErrorBoundary>
               <PageTransition>
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/organization" element={<Organization />} />
-                  <Route path="/tasks" element={<Tasks />} />
-                  <Route path="/messages" element={<Messages />} />
-                  <Route path="/knowledge" element={<Knowledge />} />
-                  <Route path="/architecture" element={<Architecture />} />
-                  <Route path="/comparison" element={<Comparison />} />
-                  <Route path="/evaluation" element={<Evaluation />} />
-                  <Route path="/tools" element={<Tools />} />
-                  <Route path="/404" element={<NotFound />} />
-                  <Route path="*" element={<Navigate to="/404" replace />} />
-                </Routes>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/organization" element={<Organization />} />
+                    <Route path="/tasks" element={<Tasks />} />
+                    <Route path="/messages" element={<Messages />} />
+                    <Route path="/knowledge" element={<Knowledge />} />
+                    <Route path="/architecture" element={<Architecture />} />
+                    <Route path="/comparison" element={<Comparison />} />
+                    <Route path="/evaluation" element={<Evaluation />} />
+                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/tools" element={<Tools />} />
+                    <Route path="/404" element={<NotFound />} />
+                    <Route path="*" element={<Navigate to="/404" replace />} />
+                  </Routes>
+                </Suspense>
               </PageTransition>
             </ErrorBoundary>
           </main>
@@ -192,6 +233,12 @@ function AppContent() {
 
           {/* Global Search Modal */}
           <GlobalSearchModal isOpen={searchOpen} onClose={closeSearch} />
+
+          {/* Scenario Panel */}
+          <ScenarioPanel isOpen={scenarioPanelOpen} onClose={handleScenarioPanelClose} />
+
+          {/* Theme Panel */}
+          <ThemePanel isOpen={themePanelOpen} onClose={handleThemePanelClose} />
         </div>
   );
 }
